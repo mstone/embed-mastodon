@@ -26,6 +26,10 @@ let
 	define('SECURE_AUTH_SALT', "");
 	define('LOGGED_IN_SALT', "");
 	define('NONCE_SALT', "");
+        /* 
+        define('WP_DEBUG', true);
+        define('WP_DEBUG_LOG', true);
+        */
         if ( !defined('ABSPATH') )
           define('ABSPATH', dirname(__FILE__) . '/');
         require_once(ABSPATH . 'wp-settings.php');
@@ -51,7 +55,7 @@ let
       ${pkgs.lib.concatStringsSep "\n" (pkgs.lib.mapAttrsToList (name: theme: "cp -r ${theme} $out/share/wordpress/wp-content/themes/${name}") themes)}
       ${pkgs.lib.concatStringsSep "\n" (pkgs.lib.mapAttrsToList (name: plugin: "cp -r ${plugin} $out/share/wordpress/wp-content/plugins/${name}") plugins)}
       ${pkgs.lib.concatMapStringsSep "\n" (language: "cp -r ${language} $out/share/wordpress/wp-content/languages/") languages}
-      ln -sf ${builtins.toString ./.} $out/share/wordpress/wp-content/plugins/dev-plugin
+      ln -sf ${config.env.DEVENV_ROOT} $out/share/wordpress/wp-content/plugins/embed-mastodon
     '';
   };
   wp-cli-yaml = pkgs.writeTextFile {
@@ -79,6 +83,7 @@ in
       --admin_name="test" \
       --admin_password="test" \
       --admin_email="root@localhost.localhost"
+    wp plugin activate embed-mastodon
   '';
 
   processes.wp-init = {
@@ -122,16 +127,6 @@ in
       root * ${wordpress}/share/wordpress
       php_fastcgi unix/${config.languages.php.fpm.pools.web.socket}
       file_server
-
-      #@uploads {
-      #  path_regexp path /uploads\/(.*)\.php
-      #}
-      #rewrite @uploads /
-
-      #@wp-admin {
-      #  path  not ^\/wp-admin/*
-      #}
-      #rewrite @wp-admin {path}/index.php?{query}
     '';
   };
 }
